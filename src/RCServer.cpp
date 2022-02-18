@@ -72,7 +72,7 @@ void RCServer::closeServer()
 }
 
 RCPacketHandler::RCPacketHandler(
-    qintptr socketDescriptor, QObject *parent): QObject(parent)
+    qintptr socketDescriptor, QObject* parent) : QObject(parent)
 {
     sock = new QTcpSocket{};
     if (!sock->setSocketDescriptor(socketDescriptor))
@@ -201,42 +201,42 @@ PlayerMeta RCPacketHandler::handlePlayerMeta(QDataStream& dataStream)
     return pm;
 }
 
-PlayerStoppedSpeaking RCPacketHandler::handlePlayerStoppedSpeaking(QByteArray &data)
+PlayerStoppedSpeaking RCPacketHandler::handlePlayerStoppedSpeaking(QByteArray& data)
 {
     return {};
 }
 
-PlayerSpeaking RCPacketHandler::handlePlayerSpeaking(QByteArray &data)
+PlayerSpeaking RCPacketHandler::handlePlayerSpeaking(QByteArray& data)
 {
     return {};
 }
 
-PlayerSpeakingSpatialized RCPacketHandler::handlePlayerSpeakingSpatialized(QByteArray &data)
+PlayerSpeakingSpatialized RCPacketHandler::handlePlayerSpeakingSpatialized(QByteArray& data)
 {
     return {};
 }
 
-PlayerDisconnected RCPacketHandler::handlePlayerDisconnected(QByteArray &data)
+PlayerDisconnected RCPacketHandler::handlePlayerDisconnected(QByteArray& data)
 {
     return {};
 }
 
-PlayerSpawned RCPacketHandler::handlePlayerSpawned(QByteArray &data)
+PlayerSpawned RCPacketHandler::handlePlayerSpawned(QByteArray& data)
 {
     return {};
 }
 
-PlayerDied RCPacketHandler::handlePlayerDied(QByteArray &data)
+PlayerDied RCPacketHandler::handlePlayerDied(QByteArray& data)
 {
     return {};
 }
 
-PlayerSquadChanged RCPacketHandler::handlePlayerSquadChanged(QByteArray &data)
+PlayerSquadChanged RCPacketHandler::handlePlayerSquadChanged(QByteArray& data)
 {
     return {};
 }
 
-PlayerTeamChanged RCPacketHandler::handlePlayerTeamChanged(QByteArray &data)
+PlayerTeamChanged RCPacketHandler::handlePlayerTeamChanged(QByteArray& data)
 {
     return {};
 }
