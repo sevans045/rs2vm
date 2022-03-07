@@ -6,59 +6,16 @@
 #include <QtEndian>
 
 #include "RCServer.h"
+#include "RCIOTask.h"
 
-constexpr int BUFFER_SIZE = 255;
-
-QDataStream& operator>>(QDataStream& in, EPacketID& packetId)
+namespace rs2vm
 {
-    return in >> reinterpret_cast<uint8_t&>(packetId);
-}
-
-std::ostream& operator<<(std::ostream& os, EPacketID& packetId)
-{
-    switch (packetId)
-    {
-        case EPacketID::None:
-            return os << "EPacketID::None";
-        case EPacketID::PlayerMeta:
-            return os << "EPacketID::PlayerMeta";
-        case EPacketID::PlayerStoppedSpeaking:
-            return os << "EPacketID::PlayerStoppedSpeaking";
-        case EPacketID::PlayerSpeaking:
-            return os << "EPacketID::PlayerSpeaking";
-        case EPacketID::PlayerSpeakingSpatialized:
-            return os << "EPacketID::PlayerSpeakingSpatialized";
-        case EPacketID::PlayerDisconnected:
-            return os << "EPacketID::PlayerDisconnected";
-        case EPacketID::PlayerSpawned:
-            return os << "EPacketID::PlayerSpawned";
-        case EPacketID::PlayerDied:
-            return os << "EPacketID::PlayerDied";
-        case EPacketID::PlayerSquadChanged:
-            return os << "EPacketID::PlayerSquadChanged";
-        case EPacketID::PlayerTeamChanged:
-            return os << "EPacketID::PlayerTeamChanged";
-    }
-    return os << static_cast<uint32_t>(packetId);
-}
-
-QDataStream& operator<<(QDataStream& out, EPacketID& packetId)
-{
-    std::stringstream ss;
-    ss << packetId;
-    return out << ss.get();
-}
-
-QDebug operator<<(QDebug debug, EPacketID& packetId)
-{
-    std::stringstream ss;
-    ss << packetId;
-    return debug << ss.get();
-}
 
 void RCServer::incomingConnection(qintptr socketDescriptor)
 {
-    new RCPacketHandler(socketDescriptor, this);
+    // new RCPacketHandler(socketDescriptor, this);
+    auto* task = new RCIOTask{socketDescriptor};
+    QThreadPool::globalInstance()->start(task);
 }
 
 void RCServer::startServer()
@@ -69,85 +26,6 @@ void RCServer::startServer()
 void RCServer::closeServer()
 {
     close();
-}
-
-RCPacketHandler::RCPacketHandler(
-    qintptr socketDescriptor, QObject* parent) : QObject(parent)
-{
-    sock = new QTcpSocket{};
-    if (!sock->setSocketDescriptor(socketDescriptor))
-    {
-        emit error(sock->error());
-        return;
-    }
-
-    connect(sock, &QTcpSocket::readyRead,
-            this, &RCPacketHandler::readSocketData, Qt::DirectConnection);
-    connect(sock, &QTcpSocket::disconnected,
-            this, &RCPacketHandler::disconnected);
-}
-
-void RCPacketHandler::readSocketData()
-{
-    QByteArray data;
-    data = sock->read(BUFFER_SIZE);
-
-    QHostAddress peerAddr = sock->peerAddress();
-    qWarning() << peerAddr << " data: " << data;
-
-    if (data.size() < Packet::minDataSize())
-    {
-        qWarning() << "not enough data received";
-        return;
-    }
-
-    QDataStream dataStream{data};
-    // Sending from UnrealScript side in little endian.
-    dataStream.setByteOrder(QDataStream::LittleEndian);
-
-    uint32_t size;
-    EPacketID packetId;
-    // size = static_cast<uint32_t>(static_cast<uint8_t>(data[0]));a
-    // packetId = static_cast<EPacketID>(static_cast<uint8_t>(data[1]));
-    dataStream >> size;
-    dataStream >> packetId;
-    qWarning() << "device.size = " << dataStream.device()->size();
-    qWarning() << "size = " << size;
-    qWarning() << "packetId = " << packetId;
-
-    switch (packetId)
-    {
-        case EPacketID::PlayerMeta:
-            handlePlayerMeta(dataStream);
-            break;
-        case EPacketID::PlayerStoppedSpeaking:
-            handlePlayerStoppedSpeaking(data);
-            break;
-        case EPacketID::PlayerSpeaking:
-            handlePlayerSpeaking(data);
-            break;
-        case EPacketID::PlayerSpeakingSpatialized:
-            handlePlayerSpeakingSpatialized(data);
-            break;
-        case EPacketID::PlayerDisconnected:
-            handlePlayerDisconnected(data);
-            break;
-        case EPacketID::PlayerSpawned:
-            handlePlayerSpawned(data);
-            break;
-        case EPacketID::PlayerDied:
-            handlePlayerDied(data);
-            break;
-        case EPacketID::PlayerSquadChanged:
-            handlePlayerSquadChanged(data);
-            break;
-        case EPacketID::PlayerTeamChanged:
-            handlePlayerTeamChanged(data);
-            break;
-        case EPacketID::None:
-        default:
-            break;
-    }
 }
 
 // TODO: don't return anything and handle the data right away.
@@ -248,9 +126,11 @@ void RCPacketHandler::disconnected()
 
 uint32_t PlayerMeta::minDataSize()
 {
-    return Packet::minDataSize()
+    return RCPacket::minDataSize()
            + sizeof(uint8_t)
            + sizeof(uint8_t)
            + sizeof(uint32_t)
            + sizeof(uint64_t);
+}
+
 }

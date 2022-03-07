@@ -19,6 +19,8 @@ add_library(
         rs2vm
         STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/RCServer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/RCIOTask.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/RCPacket.cpp
 )
 
 target_include_directories(
